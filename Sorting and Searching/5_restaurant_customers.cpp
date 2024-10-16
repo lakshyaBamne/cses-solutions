@@ -1,6 +1,8 @@
 #include<iostream>
 #include<vector>
 #include<algorithm>
+#include<queue>
+#include<climits>
 
 using namespace std;
 
@@ -8,33 +10,31 @@ int main(){
     int n, a, b;
     cin >> n;
 
-    vector< vector<int> > ivls;
+    priority_queue< vector<int> , vector< vector<int> > , greater< vector<int> > > pq; // min heap
     for(int i=0 ; i<n ; i++){
         cin >> a >> b;
-        ivls.push_back({a,b});
+
+        pq.push({a, 0});
+        pq.push({b, 1});
     }
 
-    sort(ivls.begin(), ivls.end());
+    int max_count = INT_MIN;
+    int count = 0;
 
-    int max_count = 1;
-    int count = 1;
+    // event based algorithm which works in O(n)
+    while(!pq.empty()){
+        vector<int> top = pq.top();
+        pq.pop();
 
-    vector<int> last_interval = ivls[0];
-    for(int i=1 ; i<n ; i++){
-
-        if(ivls[i][0]>=last_interval[0] && ivls[i][0]<=last_interval[1]){
-            // intersection
+        if(top[1] == 0){
             count++;
-            last_interval = {max(last_interval[0],ivls[i][0]),min(last_interval[1],ivls[i][1])};
+
+            max_count = max(max_count, count);
         }
         else{
-            max_count = max(max_count, count);
-            count = 1;
-            last_interval = ivls[i];
+            count--;
         }
     }
-
-    max_count = max(max_count, count);
 
     cout << max_count << endl;
 

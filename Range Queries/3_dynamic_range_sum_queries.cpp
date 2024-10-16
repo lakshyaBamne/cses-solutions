@@ -7,6 +7,76 @@ using namespace std;
 
 using ll = long long;
 
+class SegmentTree{
+public:
+    ll n;
+    vector<ll> t;
+
+    SegmentTree(vector<ll>& nums){
+        n = nums.size();
+        t.resize(4*n);
+
+        build_segment_tree(nums, 0, 0, n-1);
+    }
+
+    void build_segment_tree(vector<ll>& nums, ll ti, ll tl, ll tr){
+        if(tl == tr){
+            t[ti] = nums[tl];
+        }
+        else{
+            ll tm = tl + (ll)((tr-tl)/2);
+
+            build_segment_tree(nums, ti*2+1, tl, tm);
+            build_segment_tree(nums, ti*2+2, tm+1, tr);
+        
+            t[ti] = t[ti*2+1]+t[ti*2+2];
+        }
+    }
+
+    // range queries
+    ll query(ll l, ll r, ll ti, ll tl, ll tr){
+        if(l==tl && r==tr){
+            return t[ti];
+        }
+        else{
+            ll tm = tl + (ll)((tr-tl)/2);
+
+            if(r <= tm){
+                // entire query lies on the left subproblem
+                return query(l, r, ti*2+1, tl, tm);
+            }
+            else if(l >= tm+1){
+                // entire query lies on the right subproblem
+                return query(l, r, ti*2+2, tm+1, tr);
+            }
+            else{
+                // divide query into two subproblems and answer each 
+                return query(l, tm, ti*2+1, tl, tm) + query(tm+1, r, ti*2+2, tm+1, tr);
+            }
+        }
+    }
+
+    // point update query
+    ll update(ll k, ll num, ll ti, ll tl, ll tr){
+        if(tl == tr){
+            return t[ti] = num;
+        }
+        else{
+            ll tm = tl + (ll)((tr-tl)/2);
+
+            if(k <= tm){
+                t[ti] = t[ti*2+2] + update(k, num, ti*2+1, tl, tm);
+            }
+            else{
+                t[ti] = t[ti*2+1] + update(k, num, ti*2+2, tm+1, tr);
+            }
+
+            return t[ti];
+        }
+    }
+
+};
+
 int main(){
     ll n, q;
     cin >> n >> q;
@@ -16,75 +86,19 @@ int main(){
         cin >> nums[i];
     }
 
-    // Preprocessing using square root decomposition
-    ll block_size = (ll)ceil(sqrt(n));
-    ll num_blocks = (ll)(n/block_size) + 1;
+    SegmentTree st(nums);
 
-    vector<ll> blocks(num_blocks, 0);
-
-    for(ll i=0 ; i<num_blocks ; i++){
-        ll start = i*block_size;
-        ll end = min(n-1, start+block_size-1);
-
-        for(ll j=start ; j<=end ; j++){
-            blocks[i] += nums[j];
-        }
-    }
-
-    ll t, l, r;
     for(ll i=0 ; i<q ; i++){
-        cin >> t >> l >> r;
+        ll a, b, c;
+        cin >> a >> b >> c;
 
-        if(t == 1){
-            l--;
-
-            nums[l] = r;
-
-            // recompute the block that contains index l
-            ll b = (ll)(l/block_size);
-            ll bstart = b*block_size;
-            ll bend = min(n-1, bstart+block_size-1);
-
-            blocks[b] = 0;
-            for(ll j=bstart ; j<=bend ; j++){
-                blocks[b] += nums[j];
-            }
+        if(a == 1){
+            // point update query
+            st.update(b-1, c, 0, 0, n-1);
         }
         else{
-            l--;
-            r--;
-
-            ll query_ans = 0;
-
-            ll bleft = (ll)(l/block_size);
-            ll bright = (ll)(r/block_size);
-        
-            ll lstart = bleft*block_size;
-            ll lend = min(n-1, lstart+block_size-1);
-
-            ll rstart = bright*block_size;
-            ll rend = min(n-1, rstart+block_size-1);
-
-            if(bleft == bright){
-                for(ll j=l ; j<=r ; j++){
-                    query_ans += nums[j];
-                }
-            }
-            else{
-                for(ll j=l ; j<=lend ; j++){
-                    query_ans += nums[j];
-                }
-
-                for(ll j=rstart ; j<=r ; j++){
-                    query_ans += nums[j];
-                }
-
-                for(ll j=bleft+1 ; j<bright ; j++){
-                    query_ans += blocks[j];
-                }
-            }
-
-            cout << query_ans << endl;
+            // range query
+            cout << st.query(b-1, c-1, 0, 0, n-1) << endl;
         }
     }
 

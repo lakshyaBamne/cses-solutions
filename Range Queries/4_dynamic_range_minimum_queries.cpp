@@ -1,5 +1,14 @@
 #include<iostream>
 #include<vector>
+#include<climits>
+#include<cmath>
+
+using namespace std;
+
+using ll = long long;
+
+#include<iostream>
+#include<vector>
 #include<cmath>
 #include<map>
 #include<climits>
@@ -62,6 +71,26 @@ public:
             return min(query(l, tm, ti*2+1, tl, tm), query(tm+1, r, ti*2+2, tm+1, tr));
         }
     }
+
+    int update(int k, int num, int ti, int tl, int tr){
+        if(tl == tr){
+            return t[ti] = num;
+        }
+        else{
+            int tm = tl + (int)((tr-tl)/2);
+
+            if(k <= tm){
+                // query lies in the left subproblem
+                t[ti] = min(t[ti*2+2], update(k, num, ti*2+1, tl, tm));
+            }
+            else{
+                // query lies in the right subproblem
+                t[ti] = min(t[ti*2+1], update(k, num, ti*2+2, tm+1, tr));
+            }
+
+            return t[ti];
+        }
+    }
 };
 
 int main(){
@@ -76,10 +105,17 @@ int main(){
     SegementTree st(nums);
 
     for(int i=0 ; i<q ; i++){
-        int l, r;
-        cin >> l >> r;
+        int a, b, c;
+        cin >> a >> b >> c;
 
-        cout << st.query(l-1, r-1, 0, 0, n-1) << endl;
+        if(a == 1){
+            // point update queries
+            st.update(b-1, c, 0, 0, n-1);
+        }
+        else{
+            // range queries
+            cout << st.query(b-1, c-1, 0, 0, n-1) << endl;
+        }
     }
 
     return 0;
